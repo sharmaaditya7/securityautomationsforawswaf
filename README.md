@@ -57,7 +57,7 @@ chmod +x ./run-unit-tests.sh
 ```
 
 ### 3. Create S3 buckets for storing deployment assets
-* AWS Solutions use two buckets:
+AWS Solutions use two buckets:
 - One global bucket that is access via the http end point. AWS CloudFormation templates are stored here. Ex. "mybucket"
 - One regional bucket for each region where you plan to deploy the solution. Use the name of the global bucket as the prefix of the bucket name, and suffixed with the region name. Regional assets such as Lambda code are stored here. Ex. "mybucket-us-east-1"
 - The assets in buckets must be accessible by your account
@@ -80,3 +80,28 @@ chmod +x ./build-s3-dist.sh && ./build-s3-dist.sh $TEMPLATE_OUTPUT_BUCKET $DIST_
 
 
 ## Upload deployment assets
+```
+aws s3 cp ./deployment/global-s3-assets s3://$TEMPLATE_OUTPUT_BUCKET/$SOLUTION_NAME/$VERSION --recursive --acl bucket-owner-full-control
+aws s3 cp ./deployment/regional-s3-assets s3://$DIST_OUTPUT_BUCKET-$AWS_REGION/$SOLUTION_NAME/$VERSION --recursive --acl bucket-owner-full-control
+```
+
+## Deploy
+- From your designated Amazon S3 bucket where you uploaded the deployment assets, copy the link location for the aws-waf-security-automations.template.
+- Using AWS CloudFormation, launch the AWS WAF Security Automations solution stack using the copied Amazon S3 link for the aws-waf-security-automations.template.
+
+## File structure
+This project consists of microservices that facilitate the functional areas of the solution. These microservices are deployed to a serverless environment in AWS Lambda.
+```
+|-deployment/ [folder containing templates and build scripts]
+|-source/
+  |-access_handler/         [microservice for processing bad bots honeypot endpoint access. This AWS Lambda function intercepts the suspicious request and adds the source IP address to the AWS WAF block list]
+  |-custom_resource/        [custom helper for CloudFormation deployment template]
+  |-helper/                 [custom helper for CloudFormation deployment dependency check and auxiliary functions]
+  |-image/                  [folder containing images of the solution such as architecture diagram]
+  |-lib/                    [library files including waf api calls and other common functions used in the solution]
+  |-ip_retention_handler/   [lambda code for setting ip retention and removing expired ips]
+  |-log_parser/             [microservice for processing access logs searching for suspicious behavior and add the corresponding source IP addresses to an AWS WAF block list]
+  |-reputation_lists_parser/ [microservice for processing third-party IP reputation lists and add malicious IP addresses to an AWS WAF block list]
+  |-timer/                   [creates a sleep function for cloudformation to pace the creation of ip_sets]
+
+```
