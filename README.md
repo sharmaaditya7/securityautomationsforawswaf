@@ -25,3 +25,51 @@ Scanners and Probes (G): This component parses application access logs searching
 IP Reputation Lists (H): This component is the IP Lists Parser AWS Lambda function which checks third-party IP reputation lists hourly for new ranges to block.
 
 Bad Bots (I): This component automatically sets up a honeypot, which is a security mechanism intended to lure and deflect an attempted attack.
+
+## Customizing the Solution
+
+* Prerequisites for Customization
+- AWS Command Line Interface
+- Python 3.8
+
+## Build
+Building from GitHub source will allow you to modify the solution, such as adding custom actions or upgrading to a new release. The process consists of downloading the source from GitHub, creating Amazon S3 buckets to store artifacts for deployment, building the solution, and uploading the artifacts to S3 in your account.
+
+* 1. Clone the repository
+Clone or download the repository to a local directory on your linux client. Note: if you intend to modify the source code you may wish to create your own fork of the GitHub repo and work from that. This allows you to check in any changes you make to your private copy of the solution.
+
+Git Clone example:
+
+git clone https://github.com/awslabs/aws-waf-security-automations.git
+Download Zip example:
+
+wget https://github.com/awslabs/aws-waf-security-automations/archive/master.zip
+
+* 2. Unit test
+Next, run unit tests to make sure your customized code passes the tests
+
+cd <rootDir>/deployment
+chmod +x ./run-unit-tests.sh
+./run-unit-tests.sh
+
+* 3. Create S3 buckets for storing deployment assets
+AWS Solutions use two buckets:
+
+One global bucket that is access via the http end point. AWS CloudFormation templates are stored here. Ex. "mybucket"
+One regional bucket for each region where you plan to deploy the solution. Use the name of the global bucket as the prefix of the bucket name, and suffixed with the region name. Regional assets such as Lambda code are stored here. Ex. "mybucket-us-east-1"
+The assets in buckets must be accessible by your account
+
+  
+* 4. Declare enviroment variables
+export TEMPLATE_OUTPUT_BUCKET=<YOUR_TEMPLATE_OUTPUT_BUCKET> # Name of the global bucket where CloudFormation templates are stored
+export DIST_OUTPUT_BUCKET=<YOUR_DIST_OUTPUT_BUCKET> # Name for the regional bucket where regional assets are stored
+export SOLUTION_NAME=<SOLUTION_NAME> # name of the solution.
+export VERSION=<VERSION> # version number for the customized code
+export AWS_REGION=<AWS_REGION> # region where the solution is deployed
+
+  
+* 5. Build the solution
+cd <rootDir>/deployment
+chmod +x ./build-s3-dist.sh && ./build-s3-dist.sh $TEMPLATE_OUTPUT_BUCKET $DIST_OUTPUT_BUCKET $SOLUTION_NAME $VERSION
+
+## Upload deployment assets
